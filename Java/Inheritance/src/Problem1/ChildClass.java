@@ -1,0 +1,8 @@
+package Problem1;
+
+public class ChildClass extends ParentClass {
+
+    public void printC() {
+        System.out.println("This is child class");
+    }
+}
