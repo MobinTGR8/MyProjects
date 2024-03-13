@@ -1,0 +1,14 @@
+1.C Basic Declarations and Expressions [150 exercises with solution]
+Done   : 1-10, 11-19, 22-30, 31-39, 40-50, 
+Problem: 20,21,15,25
+
+5.C Basic Input Output statement [10 exercises with solution]
+Done   : 1-10
+Problem: 0
+
+7.C For Loop [61 exercises with solution]
+Done   : 1-10
+Problem: 0 
+
+
+abc : 1-26
