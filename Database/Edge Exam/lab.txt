@@ -1,0 +1,192 @@
+1.
+CREATE DATABASE EmployeeDB;
+USE EmployeeDB;
+
+CREATE TABLE Employee (
+    EmployeeID INT PRIMARY KEY,
+    EmployeeName VARCHAR(100),
+    Department VARCHAR(50),
+    Salary DECIMAL(10,2),
+    Month VARCHAR(20)
+);
+
+INSERT INTO Employee (EmployeeID, EmployeeName, Department, Salary, Month) VALUES
+(1, 'John Doe', 'IT', 50000, 'January'),
+(2, 'Jane Smith', 'HR', 45000, 'January'),
+(3, 'John Doe', 'IT', 51000, 'February'),
+(4, 'Jane Smith', 'HR', 46000, 'February');
+
+SELECT 
+    EmployeeID,
+    EmployeeName,
+    Department,
+    MAX(CASE WHEN Month = 'January' THEN Salary ELSE 0 END) AS January_Salary,
+    MAX(CASE WHEN Month = 'February' THEN Salary ELSE 0 END) AS February_Salary
+FROM Employee
+GROUP BY EmployeeID, EmployeeName, Department;3.
+DELETE FROM Employee 
+WHERE EmployeeID NOT IN (
+    SELECT MIN(EmployeeID) 
+    FROM Employee 
+    GROUP BY EmployeeName, Department, Salary, Month
+);
+
+2.
+
+CREATE PROFILE Combine LIMIT
+    PASSWORD_LIFE_TIME 10
+    PASSWORD_GRACE_TIME 8
+    PASSWORD_REUSE_MAX 3
+    PASSWORD_REUSE_TIME 10
+    PASSWORD_LOCK_TIME 1
+    FAILED_LOGIN_ATTEMPTS 2;
+
+SELECT * FROM DBA_PROFILES WHERE PROFILE = 'Combine';
+
+ALTER USER username PROFILE Combine;
+
+3.
+
+-- Create two sample tables
+CREATE TABLE TableA (ID INT, Value VARCHAR(10));
+CREATE TABLE TableB (ID INT, Value VARCHAR(10));
+
+-- Insert sample data
+INSERT INTO TableA VALUES (1, 'A1'), (2, 'A2'), (3, 'A3');
+INSERT INTO TableB VALUES (1, 'B1'), (2, 'B2'), (4, 'B4');
+
+-- Inner Join
+SELECT * FROM TableA INNER JOIN TableB ON TableA.ID = TableB.ID;
+
+-- Left Join
+SELECT * FROM TableA LEFT JOIN TableB ON TableA.ID = TableB.ID;
+
+-- Right Join
+SELECT * FROM TableA RIGHT JOIN TableB ON TableA.ID = TableB.ID;
+
+-- Full Join
+SELECT * FROM TableA FULL JOIN TableB ON TableA.ID = TableB.ID;
+
+-- Cross Join
+SELECT * FROM TableA CROSS JOIN TableB;
+
+
+SELECT column1, column2, COUNT(*)
+FROM your_table
+GROUP BY column1, column2
+HAVING COUNT(*) > 1;
+
+4.
+-- (i) Create database and table, insert sample data, and export
+
+-- Create the university database
+CREATE DATABASE university;
+
+-- Use the database
+USE university;
+
+-- Create the course table (assuming relevant columns for instructors and departments)
+CREATE TABLE course (
+    course_id INT PRIMARY KEY,
+    course_name VARCHAR(100),
+    dept_name VARCHAR(50),
+    instructor_id INT,
+    salary DECIMAL(10, 2),
+    budget DECIMAL(10, 2)
+);
+
+-- Insert sample data (assuming structure based on queries)
+INSERT INTO course (course_id, course_name, dept_name, instructor_id, salary, budget) VALUES
+(1, 'Database Systems', 'Computer Science', 101, 85000, 500000),
+(2, 'Algorithms', 'Computer Science', 102, 95000, 500000),
+(3, 'Astrophysics', 'Astronomy', 103, 110000, 400000),
+(4, 'Quantum Physics', 'Physics', 104, 120000, 600000),
+(5, 'Statistics', 'Mathematics', 105, 80000, 450000);
+
+-- Export the database to desktop (MySQL command-line or GUI tool like phpMyAdmin)
+-- Example using mysqldump (run in command line):
+-- mysqldump -u [username] -p university > C:\Users\YourUsername\Desktop\university.sql
+
+-- (ii) Find the names of those departments whose budget is higher than that of Astronomy
+SELECT dept_name
+FROM course
+WHERE budget > (
+    SELECT budget 
+    FROM course 
+    WHERE dept_name = 'Astronomy'
+)
+ORDER BY dept_name;
+
+-- Output (based on sample data):
+-- dept_name
+-- Mathematics
+-- Physics
+
+-- (iii) Find the names of all instructors in the Computer Science department who have salary less than 90,000
+-- Assuming instructor names are linked via instructor_id (create a sample instructors table for clarity)
+CREATE TABLE instructors (
+    instructor_id INT PRIMARY KEY,
+    instructor_name VARCHAR(100),
+    dept_name VARCHAR(50)
+);
+
+INSERT INTO instructors (instructor_id, instructor_name, dept_name) VALUES
+(101, 'Alice Johnson', 'Computer Science'),
+(102, 'Bob Smith', 'Computer Science'),
+(103, 'Carol Williams', 'Astronomy'),
+(104, 'David Brown', 'Physics'),
+(105, 'Eve Davis', 'Mathematics');
+
+SELECT i.instructor_name
+FROM instructors i
+JOIN course c ON i.instructor_id = c.instructor_id
+WHERE i.dept_name = 'Computer Science' AND c.salary < 90000;
+
+-- Output (based on sample data):
+-- instructor_name
+-- Alice Johnson
+
+-- (iv) Find the number of instructors in each department
+SELECT dept_name, COUNT(DISTINCT instructor_id) AS instructor_count
+FROM instructors
+GROUP BY dept_name;
+
+-- Output (based on sample data):
+-- dept_name       | instructor_count
+-- Astronomy       | 1
+-- Computer Science| 2
+-- Mathematics     | 1
+-- Physics         | 1
+
+-- (v) Increase salaries of instructors whose salary is over $100,000 by 3.0% and all others by 4.5%
+UPDATE course
+SET salary = CASE 
+    WHEN salary > 100000 THEN salary * 1.03  -- 3.0% increase
+    ELSE salary * 1.045  -- 4.5% increase
+END;
+
+-- Verify the updated salaries
+SELECT instructor_id, dept_name, salary
+FROM course
+ORDER BY dept_name;
+
+-- Output (based on sample data, after update):
+-- instructor_id | dept_name       | salary
+-- 101          | Computer Science| 88530.00 (85000 * 1.045)
+-- 102          | Computer Science| 99150.00 (95000 * 1.045)
+-- 103          | Astronomy       | 113300.00 (110000 * 1.03)
+-- 104          | Physics         | 123600.00 (120000 * 1.03)
+-- 105          | Mathematics     | 83600.00 (80000 * 1.045)
+
+5.
+
+Justification:
+
+PASSWORD_REUSE_MAX: Specifies the number of password changes required before a password can be reused.
+
+PASSWORD_REUSE_TIME: Specifies the number of days that must pass before a password can be reused.
+
+
+CREATE PROFILE secure_profile LIMIT
+    PASSWORD_REUSE_MAX 5
+    PASSWORD_REUSE_TIME UNLIMITED;

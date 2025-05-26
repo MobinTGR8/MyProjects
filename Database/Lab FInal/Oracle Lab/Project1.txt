@@ -1,0 +1,134 @@
+1. Project Password Management
+
+a. Create a PROFILE named Password_Management where PASSWORD LIFE TIME will be 10 days, PASSWORDGRACETIME will be 8 days, PASSWORD REUSE MAX will be 3, PASSWORDLOCKTIME will for 1 day, FAILEDLOGIN ATTEMPTS for 2 times, PASSWORDREUSETIME 10 day. Prove each profile by appropriate comment execution. Submit the consequent execution comment in text file. Also show the comment for showing your created profile.   							
+b. To prevent a password from being reused, you can use one of two profile parameters: PASSWORD_REUSE_MAX or PASSWORD_REUSE_TIME. ‘These two parameters are mutually exclusive; if you set a value for one of them, the other must not be set to UNLIMITED’-justify the statement. 	
+
+PS C:\Users\mobin> sqlplus
+
+SQL*Plus: Release 23.0.0.0.0 - Production on Sun Jan 26 23:38:37 2025
+Version 23.6.0.24.10
+
+Copyright (c) 1982, 2024, Oracle.  All rights reserved.
+
+Enter user-name: system
+Enter password:
+Last Successful login time: Sun Jan 26 2025 23:35:32 +06:00
+
+Connected to:
+Oracle Database 23ai Free Release 23.0.0.0.0 - Develop, Learn, and Run for Free
+Version 23.6.0.24.10
+
+-- Task a: Create a PROFILE named Combine with the specified parameters
+
+-- Create the PROFILE
+SQL> create profile C##Combine LIMIT
+  2  PASSWORD_LIFE_TIME 10	-- Password expires in 10 days
+  3  PASSWORD_GRACE_TIME 8	-- Grace period of 8 days after expiry
+  4  PASSWORD_REUSE_MAX 3	-- Password cannot be reused until 3 new passwords have been used
+  5  PASSWORD_LOCK_TIME 1	-- Lock account for 1 day after limit reached
+  6  FAILED_LOGIN_ATTEMPTS 2	-- Lock account after 2 failed login attempts
+  7  PASSWORD_REUSE_TIME 10;	-- Password cannot be reused for 10 days
+
+Profile created.
+
+-- Test the profile by assigning it to a user
+
+SQL> SELECT * FROM DBA_PROFILES WHERE PROFILE = 'Combine';
+
+no rows selected
+
+SQL> CREATE USER C##test IDENTIFIED BY 123;
+
+User created.
+
+SQL> ALTER USER C##test PROFILE C##Combine;
+
+User altered.
+
+SQL> grant create session to C##test;
+
+Grant succeeded.
+
+SQL> connect C##test/123
+Connected.
+SQL> connect C##test/122
+ERROR:
+ORA-01017: invalid credential or not authorized; logon denied
+Help: https://docs.oracle.com/error-help/db/ora-01017/
+
+
+Warning: You are no longer connected to ORACLE.
+SQL> connect C##test/121
+ERROR:
+ORA-01017: invalid credential or not authorized; logon denied
+Help: https://docs.oracle.com/error-help/db/ora-01017/
+
+
+SQL> connect C##test/121
+ERROR:
+ORA-28000: The account is locked; login denied.
+Help: https://docs.oracle.com/error-help/db/ora-28000/
+
+
+SQL> connect C##test/123
+Connected.
+SQL> password
+Changing password for C##TEST
+Old password:
+New password:
+Retype new password:
+Password changed
+SQL> connect C##test/1
+Connected.
+SQL> connect C##test/1
+Connected.
+SQL> password
+Changing password for C##TEST
+Old password:
+New password:
+Retype new password:
+Password changed
+SQL> connect C##test/123
+Connected.
+SQL> password
+Changing password for C##TEST
+Old password:
+New password:
+Retype new password:
+ERROR:
+ORA-28007: The password cannot be reused.
+Help: https://docs.oracle.com/error-help/db/ora-28007/
+
+Password unchanged
+SQL> connect C##test/1
+ERROR:
+ORA-01017: invalid credential or not authorized; logon denied
+Help: https://docs.oracle.com/error-help/db/ora-01017/
+
+Warning: You are no longer connected to ORACLE.
+SQL> connect C##test/123
+Connected.
+SQL> password
+Changing password for C##TEST
+Old password:
+New password:
+Retype new password:
+ERROR:
+ORA-28007: The password cannot be reused.
+Help: https://docs.oracle.com/error-help/db/ora-28007/
+
+
+-- Task b: Justify the statement about mutual exclusivity
+
+-- Correct usage examples:
+SQL> ALTER PROFILE Combine LIMIT PASSWORD_REUSE_MAX 3 PASSWORD_REUSE_TIME UNLIMITED;
+SQL> ALTER PROFILE Combine LIMIT PASSWORD_REUSE_TIME 10 PASSWORD_REUSE_MAX UNLIMITED;
+
+-- Incorrect usage example (results in an error):
+-- ALTER PROFILE Combine LIMIT PASSWORD_REUSE_MAX 3 PASSWORD_REUSE_TIME 10;
+
+-- Explanation:
+-- PASSWORD_REUSE_MAX and PASSWORD_REUSE_TIME are mutually exclusive to prevent contradictions.
+-- Example: PASSWORD_REUSE_MAX = 3 requires 3 password changes; PASSWORD_REUSE_TIME = 10 requires 10 days.
+-- If both are set, it creates ambiguity about which rule takes precedence.
+

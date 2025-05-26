@@ -1,0 +1,221 @@
+Microsoft Windows [Version 10.0.22631.4751]
+(c) Microsoft Corporation. All rights reserved.
+
+C:\Users\irams>sqlplus
+
+SQL*Plus: Release 21.0.0.0.0 - Production on Thu Jan 30 13:43:20 2025
+Version 21.3.0.0.0
+
+Copyright (c) 1982, 2021, Oracle.  All rights reserved.
+
+Enter user-name: system
+Enter password:
+Last Successful login time: Thu Jan 30 2025 13:36:56 +06:00
+
+Connected to:
+Oracle Database 21c Express Edition Release 21.0.0.0.0 - Production
+Version 21.3.0.0.0
+
+SQL>
+SQL> create user Judy identified by sarah;
+create user Judy identified by sarah
+            *
+ERROR at line 1:
+ORA-65096: invalid common user or role name
+
+
+SQL> create user C##Judy identified by sarah;
+
+User created.
+
+SQL> grant CREATE SESSION to C##Judy;
+
+Grant succeeded.
+
+SQL> create user C##Bob identified by carolyn;
+
+User created.
+
+SQL> grant CREATE SESSION, CREATE TABLE, CREATE VIEW,
+  2     CREATE SYNONYM to bob;
+   CREATE SYNONYM to bob
+                     *
+ERROR at line 2:
+ORA-01917: user or role 'BOB' does not exist
+
+
+SQL> grant CREATE SESSION, CREATE TABLE, CREATE VIEW,
+  2     CREATE SYNONYM to C##bob;
+
+Grant succeeded.
+
+SQL> alter user C##bob
+  2     default tablespace users
+  3    quota 5m on users;
+
+User altered.
+
+SQL> show user
+USER is "SYSTEM"
+SQL> connect bob/carolyn
+ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+Warning: You are no longer connected to ORACLE.
+SQL> connect C##bob/carolyn
+Connected.
+SQL> create table NEWSPAPER (
+  2  Feature      VARCHAR2(15) not null,
+  3  Section      CHAR(1),
+  4  Page         NUMBER
+  5  );
+
+Table created.
+
+SQL>
+SQL> insert into NEWSPAPER values ('National News', 'A', 1);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Sports', 'D', 1);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Editorials', 'A', 12);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Business', 'E', 1);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Weather', 'C', 2);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Television', 'B', 7);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Births', 'F', 7);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Classified', 'F', 8);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Modern Life', 'B', 1);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Comics', 'C', 4);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Movies', 'B', 4);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Bridge', 'B', 2);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Obituaries', 'F', 6);
+
+1 row created.
+
+SQL> insert into NEWSPAPER values ('Doctor Is In', 'F', 6);
+
+1 row created.
+
+SQL> show user
+USER is "C##BOB"
+SQL> select * from newspaper;
+
+FEATURE         S       PAGE
+--------------- - ----------
+National News   A          1
+Sports          D          1
+Editorials      A         12
+Business        E          1
+Weather         C          2
+Television      B          7
+Births          F          7
+Classified      F          8
+Modern Life     B          1
+Comics          C          4
+Movies          B          4
+
+FEATURE         S       PAGE
+--------------- - ----------
+Bridge          B          2
+Obituaries      F          6
+Doctor Is In    F          6
+
+14 rows selected.
+
+SQL> GRANT SELECT ON NEWSPAPER TO C##Judy;
+
+Grant succeeded.
+
+SQL> connect Judy/sarah;
+ERROR:
+ORA-01017: invalid username/password; logon denied
+
+
+Warning: You are no longer connected to ORACLE.
+SQL> connect C##Judy/sarah;
+Connected.
+SQL> select * from bob.NEWSPAPER;
+select * from bob.NEWSPAPER
+                  *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> select * from C##bob.NEWSPAPER;
+
+FEATURE         S       PAGE
+--------------- - ----------
+National News   A          1
+Sports          D          1
+Editorials      A         12
+Business        E          1
+Weather         C          2
+Television      B          7
+Births          F          7
+Classified      F          8
+Modern Life     B          1
+Comics          C          4
+Movies          B          4
+
+FEATURE         S       PAGE
+--------------- - ----------
+Bridge          B          2
+Obituaries      F          6
+Doctor Is In    F          6
+
+14 rows selected.
+
+SQL> insert into C##bob.NEWSPAPER values ('National News', 'A', 1);
+insert into C##bob.NEWSPAPER values ('National News', 'A', 1)
+                   *
+ERROR at line 1:
+ORA-01031: insufficient privileges
+
+
+SQL> connect C##bob/carolyn
+Connected.
+SQL> GRANT insert ON NEWSPAPER TO C##Judy;
+
+Grant succeeded.
+
+SQL> connect C##Judy/sarah;
+Connected.
+SQL> insert into C##bob.NEWSPAPER values ('National News', 'A', 1);
+
+1 row created.
+
+SQL> ^A

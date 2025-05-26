@@ -1,0 +1,109 @@
+1.
+DELETE FROM OrderDetails
+WHERE OrderID IN (SELECT OrderID FROM Orders WHERE CustomerID = @CustomerID);
+
+DELETE FROM Orders WHERE CustomerID = @CustomerID;
+DELETE FROM Customers WHERE CustomerID = @CustomerID;
+2.
+CREATE TABLE EmployeeAudit (
+    AuditID INT IDENTITY(1,1) PRIMARY KEY, -- Auto-incrementing ID for audit records
+    EmployeeID INT,                        -- ID of the employee
+    OldSalary DECIMAL(10,2),              -- Salary before the update
+    NewSalary DECIMAL(10,2),              -- Salary after the update
+    ChangeDateTime DATETIME DEFAULT GETDATE() -- Timestamp of the change
+);
+CREATE TABLE Employees (
+    EmployeeID INT PRIMARY KEY,
+    Salary DECIMAL(10,2)
+);
+CREATE TRIGGER trg_EmployeeSalaryAudit
+ON Employees
+AFTER UPDATE
+AS
+BEGIN
+    -- Insert into EmployeeAudit by comparing old and new salary values
+    INSERT INTO EmployeeAudit (EmployeeID, OldSalary, NewSalary)
+    SELECT 
+        i.EmployeeID, 
+        d.Salary AS OldSalary, -- Old salary from the DELETED table
+        i.Salary AS NewSalary  -- New salary from the INSERTED table
+    FROM INSERTED i
+    INNER JOIN DELETED d ON i.EmployeeID = d.EmployeeID
+    WHERE i.Salary != d.Salary; -- Only log if the salary actually changed
+END;
+INSERT INTO Employees (EmployeeID, Salary)
+VALUES (1, 50000.00);
+UPDATE Employees
+SET Salary = 55000.00
+WHERE EmployeeID = 1;
+SELECT * FROM EmployeeAudit;
+3.
+DECLARE @UserId INT = 1;
+DECLARE @SQL NVARCHAR(MAX);
+
+SET @SQL = N'SELECT * FROM Users WHERE UserId = @UserId';
+EXEC sp_executesql @SQL, N'@UserId INT', @UserId;
+4.
+-- Create BOOKSHELF_AUDIT table
+CREATE TABLE BOOKSHELF_AUDIT (
+    AuditID INT IDENTITY(1,1) PRIMARY KEY,
+    BookID INT,
+    OldRating DECIMAL(3,1),
+    NewRating DECIMAL(3,1),
+    UpdateDateTime DATETIME DEFAULT GETDATE()
+);
+
+-- Create BOOKSHELF table
+CREATE TABLE BOOKSHELF (
+    BookID INT PRIMARY KEY,
+    Title NVARCHAR(100),
+    Rating DECIMAL(3,1)
+);
+
+-- Insert sample data into BOOKSHELF
+INSERT INTO BOOKSHELF (BookID, Title, Rating)
+VALUES 
+    (1, 'The Great Gatsby', 4.5),
+    (2, '1984', 4.7),
+    (3, 'To Kill a Mockingbird', 4.8);
+CREATE TRIGGER trg_BookshelfRatingAudit
+ON BOOKSHELF
+AFTER UPDATE
+AS
+BEGIN
+    -- Insert into BOOKSHELF_AUDIT only if Rating has changed
+    INSERT INTO BOOKSHELF_AUDIT (BookID, OldRating, NewRating)
+    SELECT 
+        i.BookID,
+        d.Rating AS OldRating,
+        i.Rating AS NewRating
+    FROM INSERTED i
+    INNER JOIN DELETED d ON i.BookID = d.BookID
+    WHERE i.Rating != d.Rating OR (i.Rating IS NOT NULL AND d.Rating IS NULL) OR (i.Rating IS NULL AND d.Rating IS NOT NULL);
+END;
+-- Update a rating to trigger the audit
+UPDATE BOOKSHELF
+SET Rating = 4.6
+WHERE BookID = 1;
+
+-- Check the audit table
+SELECT * FROM BOOKSHELF_AUDIT;
+5.
+CREATE USER Judy IDENTIFIED BY sarah;
+GRANT CREATE SESSION TO Judy;
+CREATE USER Bob IDENTIFIED BY Carolyn;
+GRANT CREATE SESSION, CREATE TABLE, CREATE VIEW, CREATE SYNONYM TO Bob;
+CONNECT Bob/Carolyn;
+CREATE TABLE NEWSPAPER (
+    ArticleID INT PRIMARY KEY,
+    Title NVARCHAR(100),
+    Content NVARCHAR(MAX)
+);
+INSERT INTO NEWSPAPER (ArticleID, Title, Content)
+VALUES (1, 'News One', 'Content of News One'),
+       (2, 'News Two', 'Content of News Two');
+GRANT SELECT, INSERT ON NEWSPAPER TO Judy;
+CONNECT Judy/sarah;
+SELECT * FROM Bob.NEWSPAPER;
+INSERT INTO Bob.NEWSPAPER (ArticleID, Title, Content)
+VALUES (3, 'News Three', 'Content of News Three');

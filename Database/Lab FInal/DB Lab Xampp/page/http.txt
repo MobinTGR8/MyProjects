@@ -1,0 +1,3 @@
+http://localhost/page/signup.php
+http://localhost/page/login.php
+http://localhost/page/dashboard.php

@@ -1,0 +1,41 @@
+
+-- Task a: Create a PROFILE named Combine with the specified parameters
+
+-- Create the PROFILE
+CREATE PROFILE Combine 
+  LIMIT
+    PASSWORD_LIFE_TIME 10         -- Password expires in 10 days
+    PASSWORD_GRACE_TIME 8         -- Grace period of 8 days after expiry
+    PASSWORD_REUSE_MAX 3          -- Password cannot be reused until 3 new passwords have been used
+    PASSWORD_LOCK_TIME 1          -- Lock account for 1 day after limit reached
+    FAILED_LOGIN_ATTEMPTS 2       -- Lock account after 2 failed login attempts
+    PASSWORD_REUSE_TIME 10;       -- Password cannot be reused for 10 days
+
+-- Verify the profile
+SELECT * FROM DBA_PROFILES WHERE PROFILE = 'Combine';
+
+-- Test the profile by assigning it to a user
+CREATE USER test_user IDENTIFIED BY test123;
+ALTER USER test_user PROFILE Combine;
+
+-- Simulate and validate the following:
+-- 1. FAILED_LOGIN_ATTEMPTS: Test by deliberately entering wrong passwords.
+-- 2. PASSWORD_LIFE_TIME and PASSWORD_GRACE_TIME: Wait for password expiry and test.
+-- 3. PASSWORD_REUSE_MAX and PASSWORD_REUSE_TIME: Change passwords and attempt reuse.
+
+-- Task b: Justify the statement about mutual exclusivity
+
+-- Correct usage examples:
+ALTER PROFILE Combine LIMIT PASSWORD_REUSE_MAX 3 PASSWORD_REUSE_TIME UNLIMITED;
+ALTER PROFILE Combine LIMIT PASSWORD_REUSE_TIME 10 PASSWORD_REUSE_MAX UNLIMITED;
+
+-- Incorrect usage example (results in an error):
+-- ALTER PROFILE Combine LIMIT PASSWORD_REUSE_MAX 3 PASSWORD_REUSE_TIME 10;
+
+-- Explanation:
+-- PASSWORD_REUSE_MAX and PASSWORD_REUSE_TIME are mutually exclusive to prevent contradictions.
+-- Example: PASSWORD_REUSE_MAX = 3 requires 3 password changes; PASSWORD_REUSE_TIME = 10 requires 10 days.
+-- If both are set, it creates ambiguity about which rule takes precedence.
+
+-- Verify profile settings again to confirm changes
+SELECT * FROM DBA_PROFILES WHERE PROFILE = 'Combine';
